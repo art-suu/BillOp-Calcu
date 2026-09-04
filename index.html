@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>BillOps Calculator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --navy:#16233f;
+    --navy-deep:#0e1830;
+    --teal:#0f7173;
+    --paper:#f4f6f8;
+    --panel:#ffffff;
+    --ink:#182233;
+    --muted:#5c6b7a;
+    --line:#d7dde3;
+    --pos:#1e7b4d;
+    --neg:#b3261e;
+    --update:#f6c945;
+    --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --sans: -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    font-family:var(--sans);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    background:var(--navy);
+    color:#fff;
+    padding:22px 28px;
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    border-bottom:3px solid var(--teal);
+  }
+  header h1{
+    margin:0;
+    font-size:1.35rem;
+    font-weight:700;
+    letter-spacing:.2px;
+  }
+  header span.tag{
+    font-family:var(--mono);
+    font-size:.75rem;
+    color:#9fb0c4;
+  }
+  main{
+    max-width:1180px;
+    margin:0 auto;
+    padding:28px 20px 0;
+  }
+  section.block{
+    margin-bottom:34px;
+  }
+  .block-head{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:12px;
+    padding-bottom:8px;
+    border-bottom:1px solid var(--line);
+  }
+  .block-head .stripe{
+    width:6px;
+    height:20px;
+    border-radius:1px;
+  }
+  .block-head h2{
+    font-size:1rem;
+    margin:0;
+    font-weight:700;
+    color:var(--navy);
+  }
+  .stripe.teal{background:var(--teal);}
+  .stripe.navy{background:var(--navy);}
+  .stripe.amber{background:var(--update);}
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:18px 20px;
+  }
+
+  /* --- Section 1 layout --- */
+  .tl-grid{
+    display:grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap:22px;
+    align-items:start;
+  }
+  @media (max-width:900px){
+    .tl-grid{grid-template-columns:1fr;}
+  }
+  .cal-title{
+    font-weight:700;
+    font-size:1.3rem;
+    margin:0 0 10px;
+    color:var(--navy);
+  }
+  table.cal{
+    width:100%;
+    border-collapse:collapse;
+    font-size:1rem;
+  }
+  table.cal th{
+    font-size:.8rem;
+    text-transform:uppercase;
+    letter-spacing:.4px;
+    color:var(--muted);
+    padding:8px 4px;
+    border-bottom:1px solid var(--line);
+    text-align:left;
+  }
+  table.cal td{
+    border:1px solid var(--line);
+    vertical-align:top;
+    height:88px;
+    padding:6px 8px;
+    width:14.28%;
+  }
+  td.outside{ color:#b6bfc8; background:#fafbfc; }
+  td.today{ box-shadow:inset 0 0 0 2px var(--teal); }
+  .daynum{ font-weight:700; font-family:var(--mono); font-size:1.15rem; }
+  .upd-flag{
+    display:inline-block;
+    margin-top:4px;
+    background:var(--update);
+    color:#3a2c02;
+    font-size:.72rem;
+    font-weight:700;
+    letter-spacing:.3px;
+    padding:2px 6px;
+  }
+  .bp-tag{
+    display:block;
+    font-family:var(--mono);
+    font-size:.72rem;
+    color:var(--muted);
+    line-height:1.4;
+  }
+  .holiday-label{
+    display:block;
+    font-size:.7rem;
+    color:var(--neg);
+    line-height:1.3;
+    margin-top:2px;
+  }
+  .cal-nav{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:10px;
+  }
+  .cal-nav button{
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    color:var(--navy);
+    font-size:.75rem;
+    font-weight:700;
+    padding:5px 10px;
+    cursor:pointer;
+  }
+  .cal-nav button:hover{ border-color:var(--teal); color:var(--teal); }
+  .cal-jump{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .cal-jump button{
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    font-size:.68rem;
+    padding:4px 8px;
+    cursor:pointer;
+    color:var(--muted);
+  }
+  .cal-jump button:hover{ border-color:var(--teal); color:var(--teal); }
+  .cal-note{
+    font-size:.68rem;
+    color:var(--muted);
+    margin-top:10px;
+    line-height:1.4;
+  }
+
+  .field-row{
+    display:flex;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .field{ flex:1; }
+  .field label{
+    display:block;
+    font-size:.72rem;
+    color:var(--muted);
+    margin-bottom:5px;
+  }
+  .field input{
+    width:100%;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    font-family:var(--mono);
+    font-size:.92rem;
+    color:var(--ink);
+  }
+  .field input:focus{ outline:none; border-color:var(--teal); }
+
+  .result-line{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    padding:7px 0;
+    border-bottom:1px dashed var(--line);
+    font-size:.86rem;
+  }
+  .result-line:last-child{ border-bottom:none; }
+  .result-line .k{ color:var(--muted); }
+  .result-line .v{ font-family:var(--mono); font-weight:700; }
+  .result-block{
+    border-left:4px solid var(--teal);
+    padding:10px 14px;
+    background:#f7fbfb;
+    margin-bottom:12px;
+  }
+  .result-block.five{ border-left-color:var(--navy); background:#f5f7fa; }
+  .result-block h3{
+    margin:0 0 6px;
+    font-size:.82rem;
+    color:var(--navy);
+  }
+  .final-target .v{ color:var(--pos); font-size:1rem; }
+
+  /* Section 2 & tax rows */
+  .three-col{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  @media (max-width:640px){ .three-col, .four-col{grid-template-columns:1fr 1fr;} }
+  .four-col{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr 1fr;
+    gap:14px;
+    margin-bottom:14px;
+  }
+  .output-banner{
+    border-left:4px solid var(--neg);
+    background:#fdf1f0;
+    padding:10px 14px;
+    font-family:var(--mono);
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--neg);
+    margin-top:6px;
+  }
+  .output-banner.pos{ border-left-color:var(--pos); background:#f0f8f3; color:var(--pos); }
+
+  .tax-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:18px;
+  }
+  @media (max-width:700px){ .tax-grid{grid-template-columns:1fr;} }
+  .tax-card h3{
+    margin:0 0 10px;
+    font-size:.88rem;
+    color:var(--navy);
+    padding-bottom:6px;
+    border-bottom:1px solid var(--line);
+  }
+  .total-line .v{ color:var(--pos); font-size:1rem; }
+
+  .editor-toggle{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+    flex-wrap:wrap;
+  }
+  .editor-toggle button{
+    border:1px solid var(--teal);
+    background:#fff;
+    color:var(--teal);
+    font-size:.72rem;
+    font-weight:700;
+    padding:6px 10px;
+    cursor:pointer;
+  }
+  .editor-toggle button:hover{ background:var(--teal); color:#fff; }
+  .editor-panel{
+    margin-top:12px;
+    border:1px solid var(--line);
+    background:#fbfcfd;
+    padding:12px;
+    max-height:420px;
+    overflow-y:auto;
+  }
+  .editor-panel table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.72rem;
+  }
+  .editor-panel th{
+    text-align:left;
+    color:var(--muted);
+    font-weight:600;
+    padding:4px 6px;
+    border-bottom:1px solid var(--line);
+    position:sticky; top:0; background:#fbfcfd;
+  }
+  .editor-panel td{
+    padding:3px 6px;
+    border-bottom:1px solid #eef1f4;
+  }
+  .editor-panel input[type="text"]{
+    width:100%;
+    padding:4px 6px;
+    border:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:.7rem;
+  }
+  .editor-actions{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .editor-actions button{
+    border:none;
+    padding:7px 14px;
+    font-size:.75rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  .btn-save{ background:var(--teal); color:#fff; }
+  .btn-clear{ background:#fff; border:1px solid var(--neg) !important; color:var(--neg); }
+  .status-banner{
+    margin-top:10px;
+    padding:8px 10px;
+    font-size:.75rem;
+    border-left:4px solid var(--teal);
+    background:#f2f8f8;
+    display:none;
+  }
+  .status-banner.show{ display:block; }
+  .status-banner.error{ border-left-color:var(--neg); background:#fdf1f0; color:var(--neg); }
+
+  footer.note{
+    max-width:1180px;
+    margin:0 auto;
+    padding:6px 20px 40px;
+    color:var(--muted);
+    font-size:.72rem;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BillOps Calculator</h1>
+  <span class="tag">standalone / no login required</span>
+</header>
+
+<main>
+
+  <!-- SECTION 1 -->
+  <section class="block">
+    <div class="block-head"><span class="stripe teal"></span><h2>1. Timeline Backdates</h2></div>
+    <div class="tl-grid">
+      <div class="panel">
+        <div class="cal-nav">
+          <button id="calPrev" type="button">&#9664; Prev</button>
+          <p class="cal-title" id="calTitle" style="margin:0;">Month</p>
+          <button id="calNext" type="button">Next &#9654;</button>
+        </div>
+        <table class="cal">
+          <thead>
+            <tr>
+              <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
+            </tr>
+          </thead>
+          <tbody id="calBody"></tbody>
+        </table>
+        <div class="cal-jump">
+          <button id="jumpToday" type="button">Today</button>
+          <button id="jump10" type="button">10-mo base month</button>
+          <button id="jump5" type="button">5-mo base month</button>
+        </div>
+
+        <div class="editor-toggle">
+          <button id="editMonthBtn" type="button">Edit this month's data</button>
+          <button id="uploadCalBtn" type="button">Upload calendar image</button>
+          <input type="file" id="calFileInput" accept="image/*" style="display:none">
+        </div>
+
+        <div class="editor-panel" id="editorPanel" style="display:none;"></div>
+        <div class="status-banner" id="statusBanner"></div>
+
+        <p class="cal-note">Data you enter or upload is saved in your browser for this tool and will still be here next time you open it.</p>
+      </div>
+
+      <div>
+        <div class="panel" style="margin-bottom:14px;">
+          <div class="field-row" style="margin-bottom:0;">
+            <div class="field">
+              <label>Today's reference date</label>
+              <input type="date" id="refDate">
+            </div>
+            <div class="field">
+              <label>Update timeline margin (# of update-days)</label>
+              <input type="number" id="margin" value="2" min="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="result-block">
+          <h3>10-Month Timeline</h3>
+          <div class="result-line"><span class="k">Calculated base backdate</span><span class="v" id="base10">—</span></div>
+          <div class="result-line final-target"><span class="k">Final target date</span><span class="v" id="final10">—</span></div>
+        </div>
+
+        <div class="result-block five">
+          <h3>5-Month Timeline</h3>
+          <div class="result-line"><span class="k">Calculated base backdate</span><span class="v" id="base5">—</span></div>
+          <div class="result-line final-target"><span class="k">Final target date</span><span class="v" id="final5">—</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 2 -->
+  <section class="block">
+    <div class="block-head"><span class="stripe navy"></span><h2>2. Bill One Month Calculator</h2></div>
+    <div class="panel">
+      <div class="three-col">
+        <div class="field"><label>Amount in EQU ($)</label><input type="number" id="b2amt" value="145.56" step="0.01"></div>
+        <div class="field"><label>Days in month</label><input type="number" id="b2days" value="30"></div>
+        <div class="field"><label>Days billed</label><input type="number" id="b2billed" value="32"></div>
+      </div>
+      <div class="result-line"><span class="k">Calculated days not billed</span><span class="v" id="b2notbilled">—</span></div>
+      <p style="font-size:.72rem;color:var(--muted);margin:14px 0 4px;">Bill one month amount output</p>
+      <div class="output-banner" id="b2output">—</div>
+    </div>
+  </section>
+
+  <!-- SECTION 3 -->
+  <section class="block">
+    <div class="block-head"><span class="stripe amber"></span><h2>3. Tax Engine (Standard Profiles)</h2></div>
+    <div class="tax-grid">
+      <div class="panel tax-card">
+        <h3>Alberta (AB) standard</h3>
+        <div class="field"><label>Amount / sum ($)</label><input type="number" id="ab_amt" value="250" step="0.01"></div>
+        <div class="result-line"><span class="k">GST and HST (5%)</span><span class="v" id="ab_gst">—</span></div>
+        <div class="result-line total-line"><span class="k">Total with tax</span><span class="v" id="ab_total">—</span></div>
+      </div>
+      <div class="panel tax-card">
+        <h3>British Columbia (BC) standard</h3>
+        <div class="field"><label>Amount / sum ($)</label><input type="number" id="bc_amt" value="200" step="0.01"></div>
+        <div class="result-line"><span class="k">GST (5%)</span><span class="v" id="bc_gst">—</span></div>
+        <div class="result-line"><span class="k">PST (7%)</span><span class="v" id="bc_pst">—</span></div>
+        <div class="result-line total-line"><span class="k">Total with tax</span><span class="v" id="bc_total">—</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4 -->
+  <section class="block">
+    <div class="block-head"><span class="stripe teal"></span><h2>4. Tax Engine (ADV Profiles)</h2></div>
+    <div class="panel">
+      <h3 style="margin:0 0 12px;font-size:.88rem;color:var(--teal);">AB and BC — ADV profile</h3>
+      <div class="four-col">
+        <div class="field"><label>1st amount</label><input type="number" id="adv1" value="308.58" step="0.01"></div>
+        <div class="field"><label>2nd amount</label><input type="number" id="adv2" value="0" step="0.01"></div>
+        <div class="field"><label>3rd amount</label><input type="number" id="adv3" value="0" step="0.01"></div>
+        <div class="field"><label>4th amount</label><input type="number" id="adv4" value="0" step="0.01"></div>
+      </div>
+      <div class="result-line"><span class="k">Sum</span><span class="v" id="adv_sum">—</span></div>
+      <div class="result-line"><span class="k">GST (5%)</span><span class="v" id="adv_gst">—</span></div>
+      <div class="result-line total-line"><span class="k">AB total (sum + GST)</span><span class="v" id="adv_ab_total">—</span></div>
+      <div class="result-line" style="margin-top:8px;"><span class="k">PST (7%, BC only)</span><span class="v" id="adv_pst">—</span></div>
+      <div class="result-line total-line"><span class="k">BC total (sum + GST + PST)</span><span class="v" id="adv_bc_total">—</span></div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="note">
+  Update days follow the fixed monthly schedule (1, 4, 7, 10, 14, 17, 20, 23, 25, 28). All calculations run locally in your browser — nothing is sent anywhere.
+</footer>
+
+<script>
+const money = n => (n<0?"-$":"$") + Math.abs(n).toFixed(2);
+
+// Fallback pattern used for any month I haven't been shown a real calendar for.
+const FALLBACK_UPDATE_DATES = [1,4,7,10,14,17,20,23,25,28];
+
+// Verified per-month data, transcribed from calendar screenshots the user has shared.
+// Key format: "YYYY-M" (M is 0-indexed, matches JS Date.getMonth()).
+// Each day entry can include: update (bool), updateLabel (string), bps (array), holiday (string).
+const MONTH_DATA = {
+  "2026-8": { // September 2026 (from uploaded calendar screenshot)
+    days: {
+      1:  { update:true },
+      2:  { bps:["BP03","BP04"] },
+      4:  { update:true, bps:["BP05","BP07"] },
+      7:  { update:true, holiday:"Labour Day" },
+      8:  { bps:["BP09","BP10"] },
+      10: { update:true, bps:["BP11"] },
+      11: { bps:["BP13","BP14"] },
+      12: { update:true, updateLabel:"UPDATE (BC ONLY)" },
+      14: { update:true },
+      15: { bps:["BP15","BP16","BP17"] },
+      17: { update:true },
+      18: { bps:["BP19","BP20"] },
+      20: { update:true },
+      21: { bps:["BP21","BP22","BP23"] },
+      23: { update:true, bps:["BP24","BP25"] },
+      25: { update:true, bps:["BP26","BP27","BP28"] },
+      28: { update:true },
+      29: { bps:["BP00","BP01"] },
+      30: { holiday:"Truth and Reconciliation Day" }
+    }
+  },
+  "2026-9": { // October 2026 — only the first couple of days were visible in the Sept screenshot's trailing row
+    days: {
+      1: { update:true },
+      2: { bps:["BP03","BP04"] }
+    }
+  }
+};
+
+function monthKey(y,m){ return `${y}-${m}`; }
+
+function dayInfo(y,m,day){
+  const key = monthKey(y,m);
+  const override = MONTH_DATA[key] && MONTH_DATA[key].days[day];
+  if(override){
+    return {
+      update: !!override.update,
+      updateLabel: override.updateLabel || "UPDATE",
+      bps: override.bps || [],
+      holiday: override.holiday || null,
+      verified: true
+    };
+  }
+  return {
+    update: FALLBACK_UPDATE_DATES.includes(day),
+    updateLabel: "UPDATE",
+    bps: [],
+    holiday: null,
+    verified: false
+  };
+}
+
+function isUpdateDay(date){
+  return dayInfo(date.getFullYear(), date.getMonth(), date.getDate()).update;
+}
+
+// Returns the next date (strictly after `date`) that is an UPDATE day.
+function nextUpdateDay(date){
+  let d = new Date(date.getTime());
+  d.setDate(d.getDate() + 1);
+  let guard = 0;
+  while(!isUpdateDay(d)){
+    d.setDate(d.getDate() + 1);
+    guard++;
+    if(guard > 400) break; // safety valve
+  }
+  return d;
+}
+
+// Advances `count` update-days forward from a base date (base date itself not counted).
+function addUpdateDays(baseDate, count){
+  let d = new Date(baseDate.getTime());
+  for(let i=0; i<count; i++){
+    d = nextUpdateDay(d);
+  }
+  return d;
+}
+
+function clampSubtractMonths(date, months){
+  const d = new Date(date.getTime());
+  const day = d.getDate();
+  d.setDate(1);
+  d.setMonth(d.getMonth() - months);
+  const lastDay = new Date(d.getFullYear(), d.getMonth()+1, 0).getDate();
+  d.setDate(Math.min(day, lastDay));
+  return d;
+}
+function fmt(d){
+  return d.toLocaleDateString('en-US', { year:'numeric', month:'long', day:'numeric' });
+}
+
+// Calendar view state is independent of the reference date so you can browse months.
+let calViewYear, calViewMonth;
+
+function renderCalendar(){
+  const y = calViewYear, m = calViewMonth;
+  document.getElementById('calTitle').textContent =
+    new Date(y, m, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'});
+
+  const firstDow = new Date(y, m, 1).getDay();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const daysInPrevMonth = new Date(y, m, 0).getDate();
+
+  const todayStr = new Date().toDateString();
+  let cells = [];
+  for(let i=firstDow-1; i>=0; i--){
+    cells.push({num: daysInPrevMonth-i, outside:true});
+  }
+  for(let d=1; d<=daysInMonth; d++){
+    cells.push({num:d, outside:false, dateObj:new Date(y,m,d)});
+  }
+  while(cells.length % 7 !== 0){
+    const n = cells.length - (firstDow + daysInMonth);
+    cells.push({num: n+1, outside:true});
+  }
+
+  let rows = '';
+  for(let i=0;i<cells.length;i+=7){
+    rows += '<tr>';
+    for(let j=i;j<i+7;j++){
+      const c = cells[j];
+      if(!c){ rows += '<td></td>'; continue; }
+      let cls = c.outside ? 'outside' : '';
+      let extra = '';
+      if(!c.outside){
+        if(c.dateObj.toDateString() === todayStr) cls += ' today';
+        const info = dayInfo(y, m, c.num);
+        if(info.update) extra += `<span class="upd-flag">${info.updateLabel}</span>`;
+        if(info.holiday) extra += `<span class="holiday-label">${info.holiday}</span>`;
+        info.bps.forEach(bp => extra += `<span class="bp-tag">${bp}</span>`);
+      }
+      rows += `<td class="${cls}"><span class="daynum">${c.num}</span>${extra}</td>`;
+    }
+    rows += '</tr>';
+  }
+  document.getElementById('calBody').innerHTML = rows;
+}
+
+function setCalView(date){
+  calViewYear = date.getFullYear();
+  calViewMonth = date.getMonth();
+  renderCalendar();
+  closeEditor();
+}
+
+function showStatus(msg, isError){
+  const el = document.getElementById('statusBanner');
+  el.textContent = msg;
+  el.classList.add('show');
+  el.classList.toggle('error', !!isError);
+}
+function clearStatus(){
+  const el = document.getElementById('statusBanner');
+  el.classList.remove('show','error');
+  el.textContent = '';
+}
+
+// ---- Persistence: stored month data overrides MONTH_DATA at runtime ----
+async function loadStoredMonths(){
+  try{
+    const listResult = await window.storage.list('month-data:', false);
+    if(!listResult || !listResult.keys) return;
+    for(const key of listResult.keys){
+      try{
+        const rec = await window.storage.get(key, false);
+        if(rec && rec.value){
+          const monthKeyName = key.replace('month-data:', '');
+          MONTH_DATA[monthKeyName] = JSON.parse(rec.value);
+        }
+      }catch(e){ /* skip unreadable key */ }
+    }
+  }catch(e){
+    // storage not available or empty — fall back silently to built-in data
+  }
+}
+
+async function saveMonthData(key, data){
+  await window.storage.set('month-data:' + key, JSON.stringify(data), false);
+}
+async function clearMonthData(key){
+  try{ await window.storage.delete('month-data:' + key, false); }catch(e){}
+}
+
+// ---- Manual editor ----
+function closeEditor(){
+  document.getElementById('editorPanel').style.display = 'none';
+  clearStatus();
+}
+
+function buildEditorForMonth(y, m){
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const monthLabel = new Date(y, m, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'});
+  let rows = '';
+  for(let d=1; d<=daysInMonth; d++){
+    const info = dayInfo(y, m, d);
+    rows += `
+      <tr data-day="${d}">
+        <td>${d}</td>
+        <td style="text-align:center;"><input type="checkbox" class="ed-update" ${info.update ? 'checked' : ''}></td>
+        <td><input type="text" class="ed-label" value="${info.update && info.updateLabel !== 'UPDATE' ? info.updateLabel : ''}" placeholder="UPDATE"></td>
+        <td><input type="text" class="ed-bps" value="${info.bps.join(', ')}" placeholder="BP01, BP02"></td>
+        <td><input type="text" class="ed-holiday" value="${info.holiday || ''}" placeholder="Holiday name"></td>
+      </tr>`;
+  }
+  const panel = document.getElementById('editorPanel');
+  panel.innerHTML = `
+    <p style="margin:0 0 8px;font-weight:700;color:var(--navy);font-size:.8rem;">Editing ${monthLabel}</p>
+    <table>
+      <thead><tr>
+        <th>Day</th><th>Update?</th><th>Label override</th><th>BPs</th><th>Holiday</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div class="editor-actions">
+      <button class="btn-save" id="saveMonthBtn" type="button">Save month data</button>
+      <button class="btn-clear" id="clearMonthBtn" type="button">Clear this month's data</button>
+      <button id="cancelEditBtn" type="button">Cancel</button>
+    </div>`;
+  panel.style.display = 'block';
+
+  document.getElementById('saveMonthBtn').addEventListener('click', () => {
+    const key = monthKey(y, m);
+    const days = {};
+    panel.querySelectorAll('tr[data-day]').forEach(tr => {
+      const day = parseInt(tr.getAttribute('data-day'), 10);
+      const update = tr.querySelector('.ed-update').checked;
+      const label = tr.querySelector('.ed-label').value.trim();
+      const bpsRaw = tr.querySelector('.ed-bps').value.trim();
+      const holiday = tr.querySelector('.ed-holiday').value.trim();
+      const bps = bpsRaw ? bpsRaw.split(',').map(s => s.trim()).filter(Boolean) : [];
+      if(update || bps.length || holiday){
+        days[day] = {};
+        if(update) days[day].update = true;
+        if(update && label) days[day].updateLabel = label;
+        if(bps.length) days[day].bps = bps;
+        if(holiday) days[day].holiday = holiday;
+      }
+    });
+    MONTH_DATA[key] = { days };
+    saveMonthData(key, MONTH_DATA[key])
+      .then(() => showStatus('Saved — this month will use your data from now on.'))
+      .catch(() => showStatus('Saved locally, but syncing to storage failed.', true));
+    renderCalendar();
+  });
+
+  document.getElementById('clearMonthBtn').addEventListener('click', () => {
+    const key = monthKey(y, m);
+    delete MONTH_DATA[key];
+    clearMonthData(key)
+      .then(() => showStatus('Cleared — this month now falls back to the standard pattern.'))
+      .catch(() => showStatus('Cleared locally, but syncing the deletion failed.', true));
+    renderCalendar();
+    closeEditor();
+  });
+
+  document.getElementById('cancelEditBtn').addEventListener('click', closeEditor);
+}
+
+// ---- Upload calendar image → parsed via Claude vision, into the same MONTH_DATA shape ----
+function fileToBase64(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result.split(',')[1]);
+    reader.onerror = () => reject(new Error('Could not read file'));
+    reader.readAsDataURL(file);
+  });
+}
+
+async function handleCalendarUpload(file){
+  clearStatus();
+  showStatus('Reading calendar image…');
+  try{
+    const base64 = await fileToBase64(file);
+    const mediaType = file.type || 'image/png';
+
+    const prompt = `You are reading a screenshot of a monthly calendar used for billing operations.
+For each day of the month, identify:
+- "update": true if the day is flagged/highlighted as an "UPDATE" day (often highlighted, e.g. yellow), false otherwise
+- "updateLabel": the exact label text if it differs from plain "UPDATE" (e.g. "UPDATE (BC ONLY)"); omit if it's just "UPDATE"
+- "bps": an array of any billing-period codes shown on that day (e.g. ["BP03","BP04"]); omit if none
+- "holiday": the holiday name shown on that day, if any; omit if none
+
+Respond with ONLY a JSON object, no markdown fences, no commentary, in this exact shape:
+{
+  "year": <4-digit year number>,
+  "month": <1-indexed month number, 1-12>,
+  "days": {
+    "<day number>": { "update": true, "updateLabel": "...", "bps": ["..."], "holiday": "..." },
+    ...
+  }
+}
+Only include a day key if it has at least one of: update=true, a non-empty bps array, or a holiday. Omit empty/irrelevant fields per day.`;
+
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: "claude-sonnet-4-6",
+        max_tokens: 2000,
+        messages: [{
+          role: "user",
+          content: [
+            { type: "image", source: { type: "base64", media_type: mediaType, data: base64 } },
+            { type: "text", text: prompt }
+          ]
+        }]
+      })
+    });
+
+    if(!response.ok) throw new Error('API request failed: ' + response.status);
+    const data = await response.json();
+    const textBlock = (data.content || []).find(b => b.type === 'text');
+    if(!textBlock) throw new Error('No text response from model');
+
+    const cleaned = textBlock.text.replace(/```json|```/g, '').trim();
+    const parsed = JSON.parse(cleaned);
+
+    if(!parsed.year || !parsed.month || !parsed.days) throw new Error('Unexpected response shape');
+
+    const y = parsed.year;
+    const m = parsed.month - 1; // convert to 0-indexed
+    const key = monthKey(y, m);
+    MONTH_DATA[key] = { days: parsed.days };
+
+    await saveMonthData(key, MONTH_DATA[key]);
+    setCalView(new Date(y, m, 1));
+    showStatus(`Done — read and saved data for ${new Date(y, m, 1).toLocaleDateString('en-US',{month:'long', year:'numeric'})}.`);
+  }catch(err){
+    showStatus('Could not read that calendar automatically: ' + err.message + '. You can enter it manually instead using the "Edit this month\u2019s data" button.', true);
+  }
+}
+
+let last10Base = null, last5Base = null;
+
+function recalcTimeline(){
+  const refInput = document.getElementById('refDate').value;
+  const margin = parseInt(document.getElementById('margin').value, 10) || 0;
+  if(!refInput) return;
+  const ref = new Date(refInput + 'T00:00:00');
+
+  const base10 = clampSubtractMonths(ref, 10);
+  const final10 = addUpdateDays(base10, margin);
+  const base5 = clampSubtractMonths(ref, 5);
+  const final5 = addUpdateDays(base5, margin);
+
+  last10Base = base10; last5Base = base5;
+
+  document.getElementById('base10').textContent = fmt(base10);
+  document.getElementById('final10').textContent = fmt(final10);
+  document.getElementById('base5').textContent = fmt(base5);
+  document.getElementById('final5').textContent = fmt(final5);
+
+  // default calendar view follows the reference date on first load only;
+  // subsequent nav/jump clicks control it explicitly.
+  if(calViewYear === undefined) setCalView(ref);
+}
+
+function recalcBillOneMonth(){
+  const amt = parseFloat(document.getElementById('b2amt').value) || 0;
+  const daysMonth = parseFloat(document.getElementById('b2days').value) || 0;
+  const daysBilled = parseFloat(document.getElementById('b2billed').value) || 0;
+  const notBilled = daysMonth - daysBilled;
+  document.getElementById('b2notbilled').textContent = notBilled.toFixed(2);
+  const output = daysMonth !== 0 ? (amt/daysMonth) * notBilled : 0;
+  const el = document.getElementById('b2output');
+  el.textContent = money(output);
+  el.classList.toggle('pos', output >= 0);
+}
+
+function recalcTaxStandard(){
+  const abAmt = parseFloat(document.getElementById('ab_amt').value) || 0;
+  const abGst = abAmt * 0.05;
+  document.getElementById('ab_gst').textContent = money(abGst);
+  document.getElementById('ab_total').textContent = money(abAmt + abGst);
+
+  const bcAmt = parseFloat(document.getElementById('bc_amt').value) || 0;
+  const bcGst = bcAmt * 0.05;
+  const bcPst = bcAmt * 0.07;
+  document.getElementById('bc_gst').textContent = money(bcGst);
+  document.getElementById('bc_pst').textContent = money(bcPst);
+  document.getElementById('bc_total').textContent = money(bcAmt + bcGst + bcPst);
+}
+
+function recalcAdv(){
+  const vals = ['adv1','adv2','adv3','adv4'].map(id => parseFloat(document.getElementById(id).value) || 0);
+  const sum = vals.reduce((a,b)=>a+b,0);
+  const gst = sum * 0.05;
+  const pst = sum * 0.07;
+  document.getElementById('adv_sum').textContent = money(sum);
+  document.getElementById('adv_gst').textContent = money(gst);
+  document.getElementById('adv_ab_total').textContent = money(sum + gst);
+  document.getElementById('adv_pst').textContent = money(pst);
+  document.getElementById('adv_bc_total').textContent = money(sum + gst + pst);
+}
+
+// wire up events
+['refDate','margin'].forEach(id => document.getElementById(id).addEventListener('input', recalcTimeline));
+['b2amt','b2days','b2billed'].forEach(id => document.getElementById(id).addEventListener('input', recalcBillOneMonth));
+['ab_amt','bc_amt'].forEach(id => document.getElementById(id).addEventListener('input', recalcTaxStandard));
+['adv1','adv2','adv3','adv4'].forEach(id => document.getElementById(id).addEventListener('input', recalcAdv));
+
+document.getElementById('calPrev').addEventListener('click', () => {
+  setCalView(new Date(calViewYear, calViewMonth - 1, 1));
+});
+document.getElementById('calNext').addEventListener('click', () => {
+  setCalView(new Date(calViewYear, calViewMonth + 1, 1));
+});
+document.getElementById('jumpToday').addEventListener('click', () => setCalView(new Date()));
+document.getElementById('jump10').addEventListener('click', () => { if(last10Base) setCalView(last10Base); });
+document.getElementById('jump5').addEventListener('click', () => { if(last5Base) setCalView(last5Base); });
+
+document.getElementById('editMonthBtn').addEventListener('click', () => {
+  clearStatus();
+  buildEditorForMonth(calViewYear, calViewMonth);
+});
+
+document.getElementById('uploadCalBtn').addEventListener('click', () => {
+  document.getElementById('calFileInput').click();
+});
+document.getElementById('calFileInput').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(file) handleCalendarUpload(file);
+  e.target.value = ''; // allow re-uploading the same file later
+});
+
+// init
+(async function init(){
+  const today = new Date();
+  document.getElementById('refDate').value = today.toISOString().slice(0,10);
+  await loadStoredMonths();
+  recalcTimeline();
+  recalcBillOneMonth();
+  recalcTaxStandard();
+  recalcAdv();
+})();
+</script>
+
+</body>
+</html>
