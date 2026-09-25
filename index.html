@@ -197,7 +197,21 @@
     color:var(--navy);
     text-transform:uppercase;
     letter-spacing:.3px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:6px;
+    user-select:none;
   }
+  .month-summary h4:hover{ color:var(--teal); }
+  .month-summary h4 .chev{
+    display:inline-block;
+    font-size:.7rem;
+    transition:transform .15s ease;
+  }
+  .month-summary.collapsed h4 .chev{ transform:rotate(-90deg); }
+  .month-summary.collapsed table,
+  .month-summary.collapsed .empty{ display:none; }
   .month-summary table{
     width:100%;
     border-collapse:collapse;
@@ -698,6 +712,8 @@ function renderCalendar(){
   renderMonthSummary(y, m, daysInMonth);
 }
 
+let summaryCollapsed = false;
+
 function renderMonthSummary(y, m, daysInMonth){
   const el = document.getElementById('monthSummary');
   let lines = [];
@@ -707,17 +723,23 @@ function renderMonthSummary(y, m, daysInMonth){
       lines.push({ day:d, bps:info.bps, holiday:info.holiday });
     }
   }
+  const heading = `<h4 id="summaryToggle"><span class="chev">&#9660;</span>BPs &amp; Holidays</h4>`;
   if(lines.length === 0){
-    el.innerHTML = '<h4>BPs &amp; Holidays</h4><p class="empty">No BP codes or holidays recorded for this month yet.</p>';
-    return;
+    el.innerHTML = heading + '<p class="empty">No BP codes or holidays recorded for this month yet.</p>';
+  } else {
+    const rowsHtml = lines.map(l => `
+      <tr>
+        <td class="day">${l.day}</td>
+        <td class="bps">${l.bps.length ? l.bps.join(', ') : '—'}</td>
+        <td class="holiday">${l.holiday || ''}</td>
+      </tr>`).join('');
+    el.innerHTML = heading + `<table>${rowsHtml}</table>`;
   }
-  const rowsHtml = lines.map(l => `
-    <tr>
-      <td class="day">${l.day}</td>
-      <td class="bps">${l.bps.length ? l.bps.join(', ') : '—'}</td>
-      <td class="holiday">${l.holiday || ''}</td>
-    </tr>`).join('');
-  el.innerHTML = `<h4>BPs &amp; Holidays</h4><table>${rowsHtml}</table>`;
+  el.classList.toggle('collapsed', summaryCollapsed);
+  document.getElementById('summaryToggle').addEventListener('click', () => {
+    summaryCollapsed = !summaryCollapsed;
+    el.classList.toggle('collapsed', summaryCollapsed);
+  });
 }
 
 function setCalView(date){
