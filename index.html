@@ -88,8 +88,8 @@
   /* --- Section 1 layout --- */
   .tl-grid{
     display:grid;
-    grid-template-columns: 1.6fr 1fr;
-    gap:22px;
+    grid-template-columns: 1.3fr 1fr;
+    gap:20px;
     align-items:start;
   }
   @media (max-width:900px){
@@ -97,56 +97,56 @@
   }
   .cal-title{
     font-weight:700;
-    font-size:1.3rem;
+    font-size:1.2rem;
     margin:0 0 10px;
     color:var(--navy);
   }
   table.cal{
     width:100%;
     border-collapse:collapse;
-    font-size:1rem;
+    font-size:.9rem;
   }
   table.cal th{
-    font-size:.8rem;
+    font-size:.75rem;
     text-transform:uppercase;
     letter-spacing:.4px;
     color:var(--muted);
-    padding:8px 4px;
+    padding:7px 4px;
     border-bottom:1px solid var(--line);
     text-align:left;
   }
   table.cal td{
     border:1px solid var(--line);
     vertical-align:top;
-    height:88px;
-    padding:6px 8px;
+    height:74px;
+    padding:5px 7px;
     width:14.28%;
   }
   td.outside{ color:#b6bfc8; background:#fafbfc; }
   td.today{ box-shadow:inset 0 0 0 2px var(--teal); }
-  .daynum{ font-weight:700; font-family:var(--mono); font-size:1.15rem; }
+  .daynum{ font-weight:700; font-family:var(--mono); font-size:1.05rem; }
   .upd-flag{
     display:inline-block;
-    margin-top:4px;
+    margin-top:3px;
     background:var(--update);
     color:#3a2c02;
-    font-size:.72rem;
+    font-size:.68rem;
     font-weight:700;
     letter-spacing:.3px;
-    padding:2px 6px;
+    padding:2px 5px;
   }
   .bp-tag{
     display:block;
     font-family:var(--mono);
-    font-size:.72rem;
+    font-size:.68rem;
     color:var(--muted);
-    line-height:1.4;
+    line-height:1.3;
   }
   .holiday-label{
     display:block;
-    font-size:.7rem;
+    font-size:.65rem;
     color:var(--neg);
-    line-height:1.3;
+    line-height:1.25;
     margin-top:2px;
   }
   .cal-nav{
@@ -186,13 +186,43 @@
     margin-top:10px;
     line-height:1.4;
   }
+  .month-summary{
+    margin-top:14px;
+    border-top:1px solid var(--line);
+    padding-top:10px;
+  }
+  .month-summary h4{
+    margin:0 0 6px;
+    font-size:.75rem;
+    color:var(--navy);
+    text-transform:uppercase;
+    letter-spacing:.3px;
+  }
+  .month-summary table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:.75rem;
+  }
+  .month-summary td{
+    padding:3px 6px;
+    border-bottom:1px solid #eef1f4;
+  }
+  .month-summary td.day{
+    font-family:var(--mono);
+    font-weight:700;
+    width:34px;
+    color:var(--navy);
+  }
+  .month-summary td.bps{ font-family:var(--mono); color:var(--muted); }
+  .month-summary td.holiday{ color:var(--neg); }
+  .month-summary .empty{ color:var(--muted); font-size:.72rem; padding:4px 0; }
 
   .field-row{
     display:flex;
     gap:14px;
     margin-bottom:14px;
   }
-  .field{ flex:1; }
+  .field{ flex:1 1 0; min-width:0; }
   .field label{
     display:block;
     font-size:.72rem;
@@ -200,6 +230,7 @@
     margin-bottom:5px;
   }
   .field input{
+    box-sizing:border-box;
     width:100%;
     padding:8px 10px;
     border:1px solid var(--line);
@@ -207,6 +238,10 @@
     font-family:var(--mono);
     font-size:.92rem;
     color:var(--ink);
+  }
+  .field input[type="date"]{
+    -webkit-appearance:none;
+    appearance:none;
   }
   .field input:focus{ outline:none; border-color:var(--teal); }
 
@@ -401,6 +436,7 @@
         <div class="status-banner" id="statusBanner"></div>
 
         <p class="cal-note">Data you enter or upload is saved in your browser for this tool and will still be here next time you open it.</p>
+        <div class="month-summary" id="monthSummary"></div>
       </div>
 
       <div>
@@ -525,10 +561,29 @@ const MONTH_DATA = {
       30: { holiday:"Truth and Reconciliation Day" }
     }
   },
-  "2026-9": { // October 2026 — only the first couple of days were visible in the Sept screenshot's trailing row
+  "2026-9": { // October 2026 (from uploaded calendar screenshot)
     days: {
-      1: { update:true },
-      2: { bps:["BP03","BP04"] }
+      1:  { update:true },
+      2:  { bps:["BP03","BP04"] },
+      4:  { update:true },
+      5:  { bps:["BP05","BP07"] },
+      7:  { update:true },
+      8:  { bps:["BP09","BP10"] },
+      9:  { bps:["BP11","BP13","BP14"] },
+      10: { update:true },
+      12: { update:true, updateLabel:"UPDATE (BC ONLY)", holiday:"Thanksgiving Day" },
+      14: { update:true },
+      15: { bps:["BP15","BP16","BP17"] },
+      16: { bps:["BP19","BP20"] },
+      17: { update:true },
+      20: { update:true },
+      21: { bps:["BP21","BP22","BP23"] },
+      23: { update:true, bps:["BP24","BP25"] },
+      25: { update:true },
+      26: { bps:["BP26","BP27","BP28"] },
+      28: { update:true },
+      30: { bps:["BP00","BP01"] },
+      31: { holiday:"Halloween" }
     }
   }
 };
@@ -640,6 +695,29 @@ function renderCalendar(){
     rows += '</tr>';
   }
   document.getElementById('calBody').innerHTML = rows;
+  renderMonthSummary(y, m, daysInMonth);
+}
+
+function renderMonthSummary(y, m, daysInMonth){
+  const el = document.getElementById('monthSummary');
+  let lines = [];
+  for(let d=1; d<=daysInMonth; d++){
+    const info = dayInfo(y, m, d);
+    if(info.bps.length || info.holiday){
+      lines.push({ day:d, bps:info.bps, holiday:info.holiday });
+    }
+  }
+  if(lines.length === 0){
+    el.innerHTML = '<h4>BPs &amp; Holidays</h4><p class="empty">No BP codes or holidays recorded for this month yet.</p>';
+    return;
+  }
+  const rowsHtml = lines.map(l => `
+    <tr>
+      <td class="day">${l.day}</td>
+      <td class="bps">${l.bps.length ? l.bps.join(', ') : '—'}</td>
+      <td class="holiday">${l.holiday || ''}</td>
+    </tr>`).join('');
+  el.innerHTML = `<h4>BPs &amp; Holidays</h4><table>${rowsHtml}</table>`;
 }
 
 function setCalView(date){
