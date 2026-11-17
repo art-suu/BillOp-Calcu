@@ -622,11 +622,32 @@ const MONTH_DATA = {
       28: { update:true }
     }
   },
-  "2026-11": { // December 2026 — only the first few days were visible in November's trailing row
+  "2026-11": { // December 2026 (from uploaded calendar screenshot)
     days: {
-      1: { update:true },
-      2: { bps:["BP03","BP04"] },
-      4: { update:true, bps:["BP05","BP07"] }
+      1:  { update:true },
+      2:  { bps:["BP03","BP04"] },
+      4:  { update:true, bps:["BP05","BP07"] },
+      7:  { update:true },
+      8:  { bps:["BP09","BP10"] },
+      10: { update:true, bps:["BP11"] },
+      11: { bps:["BP13","BP14"] },
+      12: { update:true, updateLabel:"UPDATE (BC ONLY)" },
+      14: { update:true },
+      15: { bps:["BP15","BP16","BP17"] },
+      17: { update:true },
+      18: { bps:["BP19","BP20"] },
+      20: { update:true },
+      21: { bps:["BP21","BP22","BP23"] },
+      23: { update:true, bps:["BP24","BP25"] },
+      24: { bps:["BP26","BP27","BP28"] },
+      25: { update:true, holiday:"Christmas Day" },
+      26: { holiday:"Boxing Day" },
+      28: { update:true, holiday:"Boxing Day (observed in some regions)" }
+    }
+  },
+  "2027-0": { // January 2027 — only day 1 was visible in December's trailing row
+    days: {
+      1: { update:true }
     }
   }
 };
